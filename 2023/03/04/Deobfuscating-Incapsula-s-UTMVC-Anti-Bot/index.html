@@ -5,10 +5,7 @@
 <p>Ready? Let’s begin.</p>
 <h2 id="Finding-the-script"><a href="#Finding-the-script" class="headerlink" title="Finding the script"></a>Finding the script</h2><p>For the purpose of this article, I am going to use the utmvc script that is served up on <a target="_blank" rel="noopener" href="https://www.smythstoys.com/">SmythsToys</a>. Firstly, let’s open up <a target="_blank" rel="noopener" href="https://www.charlesproxy.com/">Charles Proxy</a> so that we can inspect the network traffic. Then open up a browser, clear cookies, cache, local storage, and then browse to our target website. We can see a few requests to Incapsula-related resources. The one that looks of interest to us here is the <code>POST</code> to <code>_Incapsula_Resource</code>. If we have a look at the HTTP contents, we can see that the <code>___utmvc</code> cookie is sent to this endpoint.</p>
 <p><img src="/images/1.png" alt="1.png"></p>
-<p>If we have a look at the <code>GET</code> request to the same endpoint, we see something interesting…</p>
-<p>![Screenshot 2023-03-04 at 23.55.18](&#x2F;Users&#x2F;tom&#x2F;Desktop&#x2F;Screenshot 2023-03-04 at 23.55.18.png)</p>
-<p>This Javascript code is the script that generates the <code>___utmvc</code> cookie. </p>
-<p>The code looks like this <em>(truncated for abrevity)</em>:</p>
+<p>If we have a look at the <code>GET</code> request to the same endpoint, we see something interesting <em>(truncated for abrevity)</em>…</p>
 <pre><code class="js">(function() &#123;	
     var z = &quot;&quot;;
     var b = &quot;766172205f3.....&quot;;
@@ -72,8 +69,6 @@ console.log(final);
 </ul>
 <p>Just from experience, I know that these particular techniques are a result of <a target="_blank" rel="noopener" href="https://obfuscator.io/">ObfuscatorIO</a>.</p>
 <h2 id="Revealing-Strings"><a href="#Revealing-Strings" class="headerlink" title="Revealing Strings"></a>Revealing Strings</h2><p>As I mentioned previously, the strings are being represented by hexadecimal escape sequences, so we need to reveal and replaice them with their plaintext values. Luckily Babel provides a really easy way for us to do this. The plaintext value can be found in the <code>extra</code> property of the <code>StringLiteral</code> type:</p>
-<img src="/Users/tom/Documents/Dev Projects/blog/blog/images/Screenshot 2023-03-05 at 00.21.12.png" alt="Screenshot 2023-03-05 at 00.21.12" style="zoom:50%;" />
-
 <p>And we can write a simple Babel visitor for this:</p>
 <pre><code class="js">const t = require(&quot;@babel/types&quot;);
 const parser = require(&quot;@babel/parser&quot;);
