@@ -205,13 +205,13 @@ shuffleWordArray(wordArray, magicNumber);
 </code></pre>
 <h3 id="RC4-Deep-Dive"><a href="#RC4-Deep-Dive" class="headerlink" title="RC4 Deep Dive"></a>RC4 Deep Dive</h3><p>This is the entire RC4 decoder function, I’ve added some comments to make it easier to understand:</p>
 <pre><code class="js">var _0xe3ea = function (_0x246fbc, _0x279367) &#123;
-  //Useless junk
   _0x246fbc = _0x246fbc - 0x0;
   //_0x3eae - This is our huge word array at the top of the script which contains all the RC4 encrypted strings
   //_0x246fbc - This is an index getter for the array
   var _0x3ef8fa = _0x3eae[_0x246fbc];
   
   if (_0xe3ea[&quot;initialized&quot;] === undefined) &#123;
+    //A Base64 Encoder/Decoder
     (function () &#123;
       var _0x45df7b = Function(&quot;return (function () &quot; + &quot;&#123;&#125;.constructor(\&quot;return this\&quot;)()&quot; + &quot;);&quot;);
       var _0x2247fc = _0x45df7b();
@@ -224,6 +224,7 @@ shuffleWordArray(wordArray, magicNumber);
         return _0x367e08;
       &#125;);
     &#125;)();
+    
     //The actual RC4 encryption code, parameter 1 is the encrypted string, parameter 2 is the key
     var _0x492c74 = function (_0x2c0fa7, _0x4478c3) &#123;
       var _0x230827 = [],
@@ -323,7 +324,46 @@ const findRc4Function = &#123;
 
 traverse(ast, findRc4Function);
 </code></pre>
-<p>We now have the RC4 decryption function isolated by itself. If you re-call from earlier, I said that we saw this type of code all over the place: <code>_0xe3ea(&quot;0x44&quot;, &quot;@7QD&quot;)</code>. We’ve now discovered that the RC4 decryption function is nested inside <code>_0xe3ea</code>, and <code>_0xe3ea</code> is a “getter” that internally calls the RC4 function and spits out the decrypted value. At the top of the getter we can see a reference with an index to our word array (<code>_0x3eae</code>). What this code is doing is fetching the encrypted string from our array, and then sending it to the RC4 decrypter. This is why it was important for us to shuffle the array before we got to this stage, otherwise we’d get the wrong decrypted string back!</p>
+<p>You can see what the code looks like by using the <code>generate</code> function:</p>
+<pre><code class="js">const generatedCode = generate(rc4Function.node).code
+console.log(generatedCode);
+
+// OUTPUT BELOW
+
+var _0x2e9201 = function (_0x22a61c, _0x3e557b) &#123;
+  var _0x4eaa1b = [],
+    _0xa3379e = 0x0,
+    _0x48c4b8,
+    _0x27e820 = &quot;&quot;,
+    _0x2afcf0 = &quot;&quot;;
+  _0x22a61c = atob(_0x22a61c);
+  for (var _0x3f2921 = 0x0, _0x358e09 = _0x22a61c[&quot;length&quot;]; _0x3f2921 &lt; _0x358e09; _0x3f2921++) &#123;
+    _0x2afcf0 += &quot;%&quot; + (&quot;00&quot; + _0x22a61c[&quot;charCodeAt&quot;](_0x3f2921)[&quot;toString&quot;](0x10))[&quot;slice&quot;](-0x2);
+  &#125;
+  _0x22a61c = decodeURIComponent(_0x2afcf0);
+  for (var _0x5d8355 = 0x0; _0x5d8355 &lt; 0x100; _0x5d8355++) &#123;
+    _0x4eaa1b[_0x5d8355] = _0x5d8355;
+  &#125;
+  for (_0x5d8355 = 0x0; _0x5d8355 &lt; 0x100; _0x5d8355++) &#123;
+    _0xa3379e = (_0xa3379e + _0x4eaa1b[_0x5d8355] + _0x3e557b[&quot;charCodeAt&quot;](_0x5d8355 % _0x3e557b[&quot;length&quot;])) % 0x100;
+    _0x48c4b8 = _0x4eaa1b[_0x5d8355];
+    _0x4eaa1b[_0x5d8355] = _0x4eaa1b[_0xa3379e];
+    _0x4eaa1b[_0xa3379e] = _0x48c4b8;
+  &#125;
+  _0x5d8355 = 0x0;
+  _0xa3379e = 0x0;
+  for (var _0x40cbb7 = 0x0; _0x40cbb7 &lt; _0x22a61c[&quot;length&quot;]; _0x40cbb7++) &#123;
+    _0x5d8355 = (_0x5d8355 + 0x1) % 0x100;
+    _0xa3379e = (_0xa3379e + _0x4eaa1b[_0x5d8355]) % 0x100;
+    _0x48c4b8 = _0x4eaa1b[_0x5d8355];
+    _0x4eaa1b[_0x5d8355] = _0x4eaa1b[_0xa3379e];
+    _0x4eaa1b[_0xa3379e] = _0x48c4b8;
+    _0x27e820 += String[&quot;fromCharCode&quot;](_0x22a61c[&quot;charCodeAt&quot;](_0x40cbb7) ^ _0x4eaa1b[(_0x4eaa1b[_0x5d8355] + _0x4eaa1b[_0xa3379e]) % 0x100]);
+  &#125;
+  return _0x27e820;
+&#125;;
+</code></pre>
+<p>We now have the RC4 decryption function isolated by itself. We don’t need to deobfuscate this any further as we don’t really care about the internals of this function, only what it produces. If you re-call from earlier, I said that we saw this type of code all over the place: <code>_0xe3ea(&quot;0x44&quot;, &quot;@7QD&quot;)</code>. We’ve now discovered that the RC4 decryption function is nested inside <code>_0xe3ea</code>, and <code>_0xe3ea</code> is a “getter” that internally calls the RC4 function and spits out the decrypted value. At the top of the getter we can see a reference with an index to our word array (<code>_0x3eae</code>). What this code is doing is fetching the encrypted string from our array, and then sending it to the RC4 decrypter. This is why it was important for us to shuffle the array before we got to this stage, otherwise we’d get the wrong decrypted string back!</p>
 <pre><code class="js">var _0xe3ea = function (_0x246fbc, _0x279367) &#123;
   _0x246fbc = _0x246fbc - 0x0;
   var _0x3ef8fa = _0x3eae[_0x246fbc]; // &lt;&lt; This is a reference to the word arary with an index
@@ -385,7 +425,8 @@ const revealStringsVisitor = &#123;
                   const key = ref.parentPath.node.arguments[1].value;
 
                   // Call the RC4 decryption function inside the context, and get the output
-                  const decryptedValue = ctx[rc4FuncVariableDeclaration.node.declarations[0].id.name](this.wordArrays[arrayName][index], key)
+                  // Remember we already shuffled the wordArray earlier, so it is in the correct order now!
+                  const decryptedValue = ctx[rc4FuncVariableDeclaration.node.declarations[0].id.name](wordArray[index], key)
 
                   // Do a plain text replacement
                   ref.parentPath.replaceWith(t.valueToNode(decryptedValue));
