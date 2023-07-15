@@ -112,3 +112,19 @@ deploy:
       token: $GITHUB_TOKEN
   name: yog
   email: info@yoghurtbot.io
+
+# RSS
+feed:
+  enable: true
+  type:
+    - atom
+    - rss2
+  path:
+    - atom.xml
+    - rss2.xml
+  limit: 0
+  hub:
+  content: true
+  order_by: -date
+  autodiscovery: true
+  template:
